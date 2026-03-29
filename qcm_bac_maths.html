@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM Maths — Bac Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a24;
+    --border: #252c3d;
+    --accent: #6c63ff;
+    --accent2: #ff6b9d;
+    --green: #22d68a;
+    --red: #ff4e6a;
+    --yellow: #ffc84a;
+    --text: #e8eaf2;
+    --muted: #8892a4;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(108,99,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,107,157,0.06) 0%, transparent 60%);
+  }
+
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: block; }
+
+  #home {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 700;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 16px;
+    margin-bottom: 48px;
+    max-width: 440px;
+  }
+
+  .themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 40px;
+  }
+
+  .theme-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .theme-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+  }
+
+  .theme-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.15); }
+  .theme-card:hover::before { transform: scaleX(1); }
+  .theme-card.selected { border-color: var(--accent); background: rgba(108,99,255,0.1); }
+  .theme-card.selected::before { transform: scaleX(1); }
+
+  .theme-emoji { font-size: 24px; margin-bottom: 8px; display: block; }
+  .theme-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .theme-count { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .check-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .theme-card.selected .check-badge { display: flex; }
+
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+  .btn {
+    padding: 14px 32px;
+    border-radius: 100px;
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 16px rgba(108,99,255,0.3);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.4); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .btn-outline:hover { border-color: var(--text); color: var(--text); }
+
+  #quiz { min-height: 100vh; display: flex; flex-direction: column; padding: 0; }
+
+  .quiz-header {
+    position: sticky;
+    top: 0;
+    background: rgba(13,15,20,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 10;
+    flex-wrap: wrap;
+  }
+
+  .quiz-theme-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(108,99,255,0.1);
+    border: 1px solid rgba(108,99,255,0.3);
+    padding: 4px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .progress-wrap { flex: 1; min-width: 80px; height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 100px; transition: width 0.4s ease; }
+  .progress-label { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .score-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 4px 14px; font-family: 'DM Mono', monospace; font-size: 13px; flex-shrink: 0; color: var(--green); }
+
+  .quiz-body { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px 60px; }
+
+  .question-card { width: 100%; max-width: 660px; animation: slideIn 0.3s ease; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-number { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+  .q-text { font-size: 20px; font-weight: 600; line-height: 1.4; margin-bottom: 32px; color: var(--text); }
+
+  .choices { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+
+  .choice-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    text-align: left;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .choice-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(108,99,255,0.05); transform: translateX(4px); }
+
+  .choice-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    min-width: 28px;
+    text-align: center;
+  }
+
+  .choice-btn:hover:not(:disabled) .choice-label { background: var(--accent); color: white; }
+
+  .choice-btn.correct { border-color: var(--green); background: rgba(34,214,138,0.08); }
+  .choice-btn.correct .choice-label { background: var(--green); color: #0d0f14; }
+  .choice-btn.wrong { border-color: var(--red); background: rgba(255,78,106,0.08); }
+  .choice-btn.wrong .choice-label { background: var(--red); color: white; }
+  .choice-btn:disabled { cursor: default; }
+
+  .feedback-box {
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: none;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .feedback-box.show { display: block; }
+  .feedback-box.correct-fb { background: rgba(34,214,138,0.08); border: 1px solid rgba(34,214,138,0.25); color: var(--green); }
+  .feedback-box.wrong-fb { background: rgba(255,78,106,0.08); border: 1px solid rgba(255,78,106,0.25); color: #ff8fa3; }
+
+  .btn-next {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    padding: 14px 36px;
+    border-radius: 100px;
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    display: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(108,99,255,0.25);
+  }
+
+  .btn-next.show { display: inline-block; }
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.35); }
+
+  #results { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
+
+  .result-emoji { font-size: 64px; margin-bottom: 24px; animation: bounce 0.6s ease; }
+
+  @keyframes bounce {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .result-score { font-size: 72px; font-weight: 700; background: linear-gradient(135deg, var(--green), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: 8px; }
+  .result-total { color: var(--muted); font-size: 18px; margin-bottom: 12px; }
+  .result-msg { font-size: 24px; font-weight: 600; margin-bottom: 32px; }
+
+  .theme-scores { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; width: 100%; max-width: 520px; margin-bottom: 32px; text-align: left; }
+
+  .theme-score-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .theme-score-row:last-child { border-bottom: none; }
+  .ts-emoji { font-size: 18px; flex-shrink: 0; }
+  .ts-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .ts-bar-wrap { width: 80px; height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; flex-shrink: 0; }
+  .ts-bar { height: 100%; border-radius: 100px; transition: width 0.6s ease; }
+  .ts-fraction { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); flex-shrink: 0; width: 28px; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+
+<div id="home" class="screen active">
+  <div class="logo">✦ Révision Bac ✦</div>
+  <h1>QCM Maths</h1>
+  <p class="subtitle">Choisis les thèmes que tu veux réviser et lance-toi !</p>
+  <div class="themes-grid" id="themesGrid"></div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="selectAll()">Tout sélectionner</button>
+    <button class="btn btn-primary" id="startBtn" onclick="startQuiz()" disabled>Commencer →</button>
+  </div>
+</div>
+
+<div id="quiz" class="screen">
+  <div class="quiz-header">
+    <span class="quiz-theme-badge" id="themeBadge">Thème</span>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <span class="progress-label" id="progressLabel">0 / 0</span>
+    <span class="score-pill" id="scorePill">✓ 0</span>
+    <button class="btn btn-outline" style="padding:8px 18px;font-size:13px;" onclick="skipQuestion()">Passer</button>
+  </div>
+  <div class="quiz-body">
+    <div class="question-card">
+      <div class="q-number" id="qNumber">Question 1</div>
+      <div class="q-text" id="qText"></div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback-box" id="feedbackBox"></div>
+      <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Suivant →</button>
+    </div>
+  </div>
+</div>
+
+<div id="results" class="screen">
+  <div class="result-emoji" id="resultEmoji">🎉</div>
+  <div class="result-score" id="resultScore">0</div>
+  <div class="result-total" id="resultTotal">/ 0</div>
+  <div class="result-msg" id="resultMsg"></div>
+  <div class="theme-scores" id="themeScores"></div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goHome()">Changer les thèmes</button>
+    <button class="btn btn-primary" onclick="restartQuiz()">Rejouer ↺</button>
+  </div>
+</div>
+
+<script>
+const allThemes = [
+  {
+    id: "automatismes", name: "Automatismes", emoji: "⚡",
+    questions: [
+      { q: "Quel est le résultat de 3 × (−4) ?", choices: ["12", "−12", "−7", "7"], answer: 1, expl: "3 × (−4) = −12. Positif × négatif = négatif." },
+      { q: "Combien vaut −5 + 8 ?", choices: ["−13", "13", "3", "−3"], answer: 2, expl: "−5 + 8 = 3. On avance de 8 depuis −5." },
+      { q: "Quel est le carré de 9 ?", choices: ["18", "45", "81", "72"], answer: 2, expl: "9² = 9 × 9 = 81." },
+      { q: "Combien vaut (−3)² ?", choices: ["−9", "6", "9", "−6"], answer: 2, expl: "(−3)² = (−3) × (−3) = 9. Négatif × négatif = positif." },
+      { q: "Quel est le résultat de 0,5 × 12 ?", choices: ["0,6", "6", "0,06", "60"], answer: 1, expl: "0,5 × 12 = 6. 0,5 est la moitié de 1, donc la moitié de 12 est 6." }
+    ]
+  },
+  {
+    id: "developpement", name: "Développement", emoji: "📐",
+    questions: [
+      { q: "Développer : 3(x + 5)", choices: ["3x + 5", "3x + 15", "x + 15", "3x − 5"], answer: 1, expl: "3(x + 5) = 3×x + 3×5 = 3x + 15." },
+      { q: "Développer : (x + 2)(x + 3)", choices: ["x² + 5x + 6", "x² + 5x + 5", "x² + 6x + 5", "x² + 6"], answer: 0, expl: "(x+2)(x+3) = x² + 3x + 2x + 6 = x² + 5x + 6." },
+      { q: "Développer : −2(3x − 4)", choices: ["−6x − 8", "6x − 8", "−6x + 8", "6x + 8"], answer: 2, expl: "−2 × 3x = −6x et −2 × (−4) = +8. Résultat : −6x + 8." },
+      { q: "Développer : (2x + 1)(x − 3)", choices: ["2x² − 5x − 3", "2x² + 5x − 3", "2x² − 5x + 3", "2x² − 7x − 3"], answer: 0, expl: "2x×x + 2x×(−3) + 1×x + 1×(−3) = 2x² − 6x + x − 3 = 2x² − 5x − 3." },
+      { q: "Développer : 4(2x − 3) − 2(x + 1)", choices: ["10x − 14", "6x − 10", "6x − 14", "10x − 10"], answer: 2, expl: "8x − 12 − 2x − 2 = 6x − 14." }
+    ]
+  },
+  {
+    id: "factorisation", name: "Factorisation", emoji: "🔧",
+    questions: [
+      { q: "Factoriser : 6x + 9", choices: ["3(2x + 3)", "6(x + 3)", "3(2x + 9)", "2(3x + 9)"], answer: 0, expl: "Le PGCD de 6 et 9 est 3. Donc 6x + 9 = 3(2x + 3)." },
+      { q: "Factoriser : x² − 4x", choices: ["x(x − 4)", "x(x + 4)", "4(x − 1)", "x²(x − 4)"], answer: 0, expl: "Le facteur commun est x. x² − 4x = x(x − 4)." },
+      { q: "Factoriser : 5x² + 10x", choices: ["5x(x + 2)", "5(x² + 2x)", "x(5x + 10)", "5x(x + 10)"], answer: 0, expl: "Facteur commun : 5x. 5x² + 10x = 5x(x + 2)." },
+      { q: "Factoriser : 12x − 8", choices: ["2(6x − 4)", "4(3x − 2)", "4(3x − 8)", "6(2x − 8)"], answer: 1, expl: "PGCD(12, 8) = 4. 12x − 8 = 4(3x − 2)." },
+      { q: "Factoriser : 3x² − 6x + 9", choices: ["x(3x − 6 + 9)", "3(x² − 2x + 3)", "3x(x − 2) + 9", "3(x² − 6x + 9)"], answer: 1, expl: "Facteur commun 3 : 3x² − 6x + 9 = 3(x² − 2x + 3)." }
+    ]
+  },
+  {
+    id: "identites", name: "Identités remarquables", emoji: "💎",
+    questions: [
+      { q: "Développer avec une identité remarquable : (x + 3)²", choices: ["x² + 9", "x² + 3x + 9", "x² + 6x + 9", "x² + 6x + 3"], answer: 2, expl: "(a+b)² = a² + 2ab + b². Ici : x² + 2×x×3 + 9 = x² + 6x + 9." },
+      { q: "Développer : (x − 5)²", choices: ["x² + 10x + 25", "x² − 10x + 25", "x² − 25", "x² + 25"], answer: 1, expl: "(a−b)² = a² − 2ab + b². Ici : x² − 10x + 25." },
+      { q: "Développer : (x + 4)(x − 4)", choices: ["x² − 8", "x² + 8", "x² − 16", "x² + 16"], answer: 2, expl: "(a+b)(a−b) = a² − b². Ici : x² − 16." },
+      { q: "Factoriser en utilisant une identité remarquable : x² − 9", choices: ["(x − 3)²", "(x + 3)(x − 3)", "(x + 9)(x − 1)", "(x − 9)(x + 1)"], answer: 1, expl: "x² − 9 = x² − 3² = (x+3)(x−3). C'est la différence de carrés." },
+      { q: "Reconnaître : x² + 4x + 4 est égal à…", choices: ["(x + 4)²", "(x + 2)²", "(x − 2)²", "(x + 1)(x + 4)"], answer: 1, expl: "x² + 4x + 4 = x² + 2×2x + 2² = (x+2)²." }
+    ]
+  },
+  {
+    id: "fractions", name: "Fractions", emoji: "➗",
+    questions: [
+      { q: "Calculer : 1/3 + 1/4", choices: ["2/7", "1/12", "7/12", "4/12"], answer: 2, expl: "Dénominateur commun 12 : 4/12 + 3/12 = 7/12." },
+      { q: "Calculer : 3/5 × 10/9", choices: ["30/45", "13/14", "2/3", "6/5"], answer: 2, expl: "3×10 / 5×9 = 30/45 = 2/3 (simplifié par 15)." },
+      { q: "Calculer : 2/3 ÷ 4/5", choices: ["8/15", "5/6", "10/12", "6/5"], answer: 1, expl: "Diviser = multiplier par l'inverse. 2/3 × 5/4 = 10/12 = 5/6." },
+      { q: "Simplifier la fraction 24/36", choices: ["3/4", "12/18", "2/3", "4/6"], answer: 2, expl: "PGCD(24,36) = 12. 24÷12 / 36÷12 = 2/3." },
+      { q: "Calculer : 5/6 − 1/4", choices: ["4/2", "7/12", "4/12", "10/24"], answer: 1, expl: "Dénominateur commun 12 : 10/12 − 3/12 = 7/12." }
+    ]
+  },
+  {
+    id: "puissances", name: "Puissances", emoji: "🚀",
+    questions: [
+      { q: "Simplifier : x³ × x⁴", choices: ["x¹²", "x⁷", "x", "x⁴³"], answer: 1, expl: "aᵐ × aⁿ = aᵐ⁺ⁿ. x³ × x⁴ = x⁷." },
+      { q: "Simplifier : x⁶ / x²", choices: ["x³", "x⁴", "x⁸", "x¹²"], answer: 1, expl: "aᵐ / aⁿ = aᵐ⁻ⁿ. x⁶ / x² = x⁴." },
+      { q: "Que vaut 2⁻³ ?", choices: ["−8", "1/8", "8", "−1/8"], answer: 1, expl: "a⁻ⁿ = 1/aⁿ. 2⁻³ = 1/8." },
+      { q: "Simplifier : (x²)³", choices: ["x⁵", "x⁶", "x²³", "x⁸"], answer: 1, expl: "(aᵐ)ⁿ = aᵐˣⁿ. (x²)³ = x⁶." },
+      { q: "Que vaut 10⁰ ?", choices: ["0", "10", "1", "100"], answer: 2, expl: "Tout nombre non nul élevé à la puissance 0 vaut 1." }
+    ]
+  },
+  {
+    id: "pourcentages", name: "Pourcentages", emoji: "📊",
+    questions: [
+      { q: "Un article coûte 80 €, soldé à −25 %. Quel est le nouveau prix ?", choices: ["55 €", "60 €", "65 €", "20 €"], answer: 1, expl: "80 × 0,75 = 60 €. On multiplie par 1 − 0,25 = 0,75." },
+      { q: "Un salaire de 1 200 € augmente de 10 %. Quel est le nouveau salaire ?", choices: ["1 210 €", "1 300 €", "1 320 €", "1 212 €"], answer: 2, expl: "1 200 × 1,10 = 1 320 €." },
+      { q: "Quelle est la valeur de 15 % de 200 ?", choices: ["15", "25", "30", "3"], answer: 2, expl: "200 × 0,15 = 30." },
+      { q: "Un prix passe de 50 € à 60 €. Quel est le pourcentage d'augmentation ?", choices: ["10 %", "15 %", "20 %", "25 %"], answer: 2, expl: "Taux = (60−50)/50 = 10/50 = 0,20 = 20 %." },
+      { q: "Deux augmentations de 10 % chacune sur 100 €. Résultat ?", choices: ["120 €", "121 €", "122 €", "120,10 €"], answer: 1, expl: "100 × 1,10 × 1,10 = 100 × 1,21 = 121 €." }
+    ]
+  },
+  {
+    id: "equations", name: "Équations", emoji: "⚖️",
+    questions: [
+      { q: "Résoudre : 2x + 3 = 11", choices: ["x = 3", "x = 4", "x = 7", "x = 5"], answer: 1, expl: "2x = 8, donc x = 4." },
+      { q: "Résoudre : 3x − 7 = 2x + 5", choices: ["x = 12", "x = 2", "x = −2", "x = −12"], answer: 0, expl: "3x − 2x = 5 + 7 → x = 12." },
+      { q: "Résoudre : x/4 = 3", choices: ["x = 3/4", "x = 12", "x = 7", "x = 3"], answer: 1, expl: "x = 3 × 4 = 12." },
+      { q: "Résoudre : 5(x − 2) = 15", choices: ["x = 1", "x = 5", "x = 3", "x = 7"], answer: 1, expl: "x − 2 = 3, donc x = 5." },
+      { q: "Résoudre : x² = 25", choices: ["x = 5 seulement", "x = −5 seulement", "x = 5 ou x = −5", "Pas de solution"], answer: 2, expl: "x² = 25 → x = 5 ou x = −5." }
+    ]
+  },
+  {
+    id: "inequations", name: "Inéquations", emoji: "📏",
+    questions: [
+      { q: "Résoudre : 2x + 1 > 7", choices: ["x > 3", "x > 4", "x < 3", "x > 6"], answer: 0, expl: "2x > 6 donc x > 3." },
+      { q: "Résoudre : −3x ≤ 9", choices: ["x ≤ −3", "x ≥ −3", "x ≤ 3", "x ≥ 3"], answer: 1, expl: "On divise par −3 : le signe s'inverse. x ≥ −3." },
+      { q: "Résoudre : 4x − 5 < 3x + 2", choices: ["x < 7", "x > 7", "x < −7", "x > −7"], answer: 0, expl: "4x − 3x < 2 + 5 → x < 7." },
+      { q: "Résoudre : x/2 ≥ 4", choices: ["x ≥ 2", "x ≥ 8", "x ≤ 8", "x ≤ 2"], answer: 1, expl: "x ≥ 4 × 2 = 8." },
+      { q: "Que se passe-t-il quand on divise une inégalité par un nombre négatif ?", choices: ["Le sens reste inchangé", "L'inégalité s'annule", "Le sens de l'inégalité s'inverse", "On obtient une égalité"], answer: 2, expl: "Diviser ou multiplier par un nombre négatif inverse le sens de l'inégalité." }
+    ]
+  },
+  {
+    id: "images_antecedents", name: "Images & antécédents", emoji: "🔁",
+    questions: [
+      { q: "Soit f(x) = 2x + 1. Quelle est l'image de 3 par f ?", choices: ["5", "7", "1", "8"], answer: 1, expl: "f(3) = 2×3 + 1 = 7." },
+      { q: "Soit f(x) = x² − 1. Quelle est l'image de −2 par f ?", choices: ["5", "−5", "3", "−3"], answer: 2, expl: "f(−2) = (−2)² − 1 = 4 − 1 = 3." },
+      { q: "Soit f(x) = 3x − 6. Quel est l'antécédent de 0 par f ?", choices: ["x = −2", "x = 2", "x = 6", "x = −6"], answer: 1, expl: "3x − 6 = 0 → x = 2." },
+      { q: "Soit f(x) = x + 4. Quel est l'antécédent de 10 par f ?", choices: ["x = 14", "x = 6", "x = 40", "x = −6"], answer: 1, expl: "x + 4 = 10 → x = 6." },
+      { q: "Soit f(x) = x². La valeur −4 a-t-elle un antécédent par f ?", choices: ["Oui, x = −2", "Oui, x = 2", "Oui, x = 2 et x = −2", "Non, car x² ≥ 0 toujours"], answer: 3, expl: "x² = −4 est impossible. Un carré est toujours positif ou nul." }
+    ]
+  },
+  {
+    id: "droite_pente", name: "Droite et pente", emoji: "📈",
+    questions: [
+      { q: "La droite d'équation y = 2x + 3 a pour pente :", choices: ["3", "2", "5", "1"], answer: 1, expl: "Dans y = ax + b, a est la pente. Ici a = 2." },
+      { q: "Quelle est l'ordonnée à l'origine de y = −x + 5 ?", choices: ["−1", "5", "−5", "4"], answer: 1, expl: "L'ordonnée à l'origine est b = 5 (valeur de y quand x = 0)." },
+      { q: "Deux droites parallèles ont :", choices: ["La même ordonnée à l'origine", "La même pente", "La même pente et le même point", "Des pentes opposées"], answer: 1, expl: "Deux droites sont parallèles si et seulement si elles ont la même pente." },
+      { q: "La droite passant par A(0 ; 2) et B(3 ; 8) a pour coefficient directeur :", choices: ["2", "6", "3", "1/2"], answer: 0, expl: "Pente = (8−2)/(3−0) = 6/3 = 2." },
+      { q: "Équation de la droite de pente 3 passant par (0 ; −1) :", choices: ["y = 3x + 1", "y = −3x + 1", "y = 3x − 1", "y = x − 3"], answer: 2, expl: "y = ax + b avec a = 3 et b = −1. Donc y = 3x − 1." }
+    ]
+  },
+  {
+    id: "variations_signe", name: "Variations & signe", emoji: "〰️",
+    questions: [
+      { q: "f(x) = 2x + 4 est croissante sur ℝ car :", choices: ["Son coefficient est négatif", "Son coefficient directeur est positif (2 > 0)", "Elle passe par l'origine", "Son ordonnée est 4"], answer: 1, expl: "Une fonction affine y = ax + b est croissante si a > 0." },
+      { q: "La fonction f(x) = −3x + 1 est :", choices: ["Croissante", "Constante", "Décroissante", "Non monotone"], answer: 2, expl: "a = −3 < 0, donc la fonction est décroissante." },
+      { q: "Pour quelle valeur de x l'expression 2x − 6 s'annule-t-elle ?", choices: ["x = 3", "x = −3", "x = 6", "x = 2"], answer: 0, expl: "2x − 6 = 0 → x = 3." },
+      { q: "Sur quel intervalle 2x − 6 est-il positif ?", choices: ["[−∞ ; 3]", "[3 ; +∞[", "]−∞ ; 3[", "[6 ; +∞["], answer: 1, expl: "2x − 6 ≥ 0 → x ≥ 3. Donc positif sur [3 ; +∞[." },
+      { q: "La fonction f(x) = x² admet un minimum en :", choices: ["x = 1", "x = −1", "x = 0", "x = 2"], answer: 2, expl: "x² ≥ 0 pour tout x, et vaut 0 en x = 0. Le minimum est en x = 0." }
+    ]
+  }
+];
+
+let selectedThemeIds = [];
+let quizQuestions = [];
+let currentIndex = 0;
+let score = 0;
+let answered = false;
+let themeStats = {};
+
+function initHome() {
+  const grid = document.getElementById('themesGrid');
+  grid.innerHTML = '';
+  allThemes.forEach(theme => {
+    const card = document.createElement('div');
+    card.className = 'theme-card' + (selectedThemeIds.includes(theme.id) ? ' selected' : '');
+    card.onclick = () => toggleTheme(theme.id, card);
+    card.innerHTML = `<span class="theme-emoji">${theme.emoji}</span><div class="theme-name">${theme.name}</div><div class="theme-count">5 questions</div><div class="check-badge">✓</div>`;
+    grid.appendChild(card);
+  });
+  updateStartBtn();
+}
+
+function toggleTheme(id, card) {
+  const idx = selectedThemeIds.indexOf(id);
+  if (idx === -1) { selectedThemeIds.push(id); card.classList.add('selected'); }
+  else { selectedThemeIds.splice(idx, 1); card.classList.remove('selected'); }
+  updateStartBtn();
+}
+
+function selectAll() {
+  selectedThemeIds = allThemes.map(t => t.id);
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.add('selected'));
+  updateStartBtn();
+}
+
+function updateStartBtn() {
+  document.getElementById('startBtn').disabled = selectedThemeIds.length === 0;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function shuffleQuestion(q) {
+  const indexed = q.choices.map((c, i) => ({ text: c, isCorrect: i === q.answer }));
+  const shuffled = shuffle(indexed);
+  return { ...q, choices: shuffled.map(c => c.text), answer: shuffled.findIndex(c => c.isCorrect) };
+}
+
+function startQuiz() {
+  quizQuestions = [];
+  themeStats = {};
+  selectedThemeIds.forEach(id => {
+    const theme = allThemes.find(t => t.id === id);
+    if (theme) {
+      themeStats[id] = { correct: 0, total: theme.questions.length, name: theme.name, emoji: theme.emoji };
+      theme.questions.forEach(q => quizQuestions.push({ ...shuffleQuestion(q), themeId: id }));
+    }
+  });
+  quizQuestions = shuffle(quizQuestions);
+  currentIndex = 0;
+  score = 0;
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = quizQuestions[currentIndex];
+  const total = quizQuestions.length;
+  answered = false;
+  const theme = allThemes.find(t => t.id === q.themeId);
+  document.getElementById('themeBadge').textContent = `${theme.emoji} ${theme.name}`;
+  document.getElementById('progressBar').style.width = `${(currentIndex / total) * 100}%`;
+  document.getElementById('progressLabel').textContent = `${currentIndex + 1} / ${total}`;
+  document.getElementById('scorePill').textContent = `✓ ${score}`;
+  document.getElementById('qNumber').textContent = `Question ${currentIndex + 1}`;
+  document.getElementById('qText').textContent = q.q;
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  q.choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-label">${labels[i]}</span>${choice}`;
+    btn.onclick = () => selectAnswer(i);
+    choicesEl.appendChild(btn);
+  });
+  const fb = document.getElementById('feedbackBox');
+  fb.className = 'feedback-box';
+  fb.innerHTML = '';
+  document.getElementById('nextBtn').className = 'btn-next';
+}
+
+function selectAnswer(chosen) {
+  if (answered) return;
+  answered = true;
+  const q = quizQuestions[currentIndex];
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('feedbackBox');
+  if (chosen === q.answer) {
+    btns[chosen].classList.add('correct');
+    score++;
+    themeStats[q.themeId].correct++;
+    fb.className = 'feedback-box correct-fb show';
+    fb.innerHTML = `<span style="font-size:18px;margin-right:8px">✅</span> <strong>Bravo !</strong> ${q.expl}`;
+  } else {
+    btns[chosen].classList.add('wrong');
+    btns[q.answer].classList.add('correct');
+    fb.className = 'feedback-box wrong-fb show';
+    fb.innerHTML = `<span style="font-size:18px;margin-right:8px">❌</span> <strong>Pas tout à fait…</strong> ${q.expl}`;
+  }
+  document.getElementById('nextBtn').className = 'btn-next show';
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex >= quizQuestions.length) showResults();
+  else renderQuestion();
+}
+
+function skipQuestion() {
+  if (!answered) { currentIndex++; if (currentIndex >= quizQuestions.length) showResults(); else renderQuestion(); }
+  else nextQuestion();
+}
+
+function showResults() {
+  const total = quizQuestions.length;
+  const pct = Math.round((score / total) * 100);
+  let emoji, msg;
+  if (pct >= 80) { emoji = '🎉'; msg = 'Excellent ! Tu maîtrises ça !'; }
+  else if (pct >= 60) { emoji = '💪'; msg = 'Bien joué, continue comme ça !'; }
+  else if (pct >= 40) { emoji = '📚'; msg = 'Bonne direction, revois encore un peu !'; }
+  else { emoji = '🔄'; msg = 'Pas de panique, la pratique paie !'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultScore').textContent = score;
+  document.getElementById('resultTotal').textContent = `/ ${total}`;
+  document.getElementById('resultMsg').textContent = msg;
+  const container = document.getElementById('themeScores');
+  container.innerHTML = '<div style="font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Résultats par thème</div>';
+  Object.values(themeStats).forEach(ts => {
+    if (ts.total === 0) return;
+    const pctT = (ts.correct / ts.total) * 100;
+    const color = pctT >= 80 ? 'var(--green)' : pctT >= 50 ? 'var(--yellow)' : 'var(--red)';
+    const row = document.createElement('div');
+    row.className = 'theme-score-row';
+    row.innerHTML = `<span class="ts-emoji">${ts.emoji}</span><span class="ts-name">${ts.name}</span><div class="ts-bar-wrap"><div class="ts-bar" style="width:${pctT}%;background:${color}"></div></div><span class="ts-fraction">${ts.correct}/${ts.total}</span>`;
+    container.appendChild(row);
+  });
+  showScreen('results');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() { showScreen('home'); initHome(); }
+function restartQuiz() { startQuiz(); }
+
+initHome();
+</script>
+</body>
+</html>
